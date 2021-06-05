@@ -1,0 +1,24 @@
+/* Simplify the WYSIWIG */
+#wp-cookie_bar_message-editor-container #mceu_2,
+#wp-cookie_bar_message-editor-container #mceu_3,
+#wp-cookie_bar_message-editor-container #mceu_4,
+#wp-cookie_bar_message-editor-container #mceu_5,
+#wp-cookie_bar_message-editor-container #mceu_6,
+#wp-cookie_bar_message-editor-container #mceu_7,
+#wp-cookie_bar_message-editor-container #mceu_8,
+#wp-cookie_bar_message-editor-container #mceu_9,
+#wp-cookie_bar_message-editor-container #mceu_10,
+#wp-cookie_bar_message-editor-container #mceu_11,
+#wp-cookie_bar_message-editor-container #mceu_13,
+#wp-cookie_bar_message-editor-container #qt_cookie_bar_message_block,
+#wp-cookie_bar_message-editor-container #qt_cookie_bar_message_del,
+#wp-cookie_bar_message-editor-container #qt_cookie_bar_message_ins,
+#wp-cookie_bar_message-editor-container #qt_cookie_bar_message_img,
+#wp-cookie_bar_message-editor-container #qt_cookie_bar_message_ul,
+#wp-cookie_bar_message-editor-container #qt_cookie_bar_message_ol,
+#wp-cookie_bar_message-editor-container #qt_cookie_bar_message_li,
+#wp-cookie_bar_message-editor-container #qt_cookie_bar_message_code,
+#wp-cookie_bar_message-editor-container #qt_cookie_bar_message_more
+ {
+  display: none;
+}

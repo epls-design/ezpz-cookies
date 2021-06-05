@@ -31,8 +31,9 @@ if ( ! class_exists('ezpz_cookies')) {
             /**
              * Init Admin Dashboard
              */
-            add_action('admin_menu', array($this, 'ezpz_cookiebar_admin_menu'));
-            add_action( 'admin_init', array( $this, 'ezpz_cookiebar_settings_page_init' ) );
+            add_action( 'admin_menu' , array($this, 'ezpz_cookiebar_admin_menu'));
+            add_action( 'admin_init' , array( $this, 'ezpz_cookiebar_settings_page_init' ) );
+            add_action( 'admin_enqueue_scripts' , array( $this, 'ezpz_cookiebar_admin_css' ) );
         }
 
         /**
@@ -69,6 +70,18 @@ if ( ! class_exists('ezpz_cookies')) {
         }
 
 
+		/**
+         * Enqueue Admin CSS
+         */
+		function ezpz_cookiebar_admin_css($hook)
+		{
+            // Load only on ?page=ezpz-cookies
+			if ($hook != 'settings_page_ezpz-cookies') {
+				return;
+            }
+			wp_enqueue_style('cookiebar_admin_css', plugins_url('ezpz-cookies-admin.css', __FILE__));
+		}
+
         public function ezpz_cookiebar_scripts_section_info() {
             echo 'The scripts you add here will only be enqueued if the user accepts tracking/analytics cookies.';
         }
@@ -81,6 +94,7 @@ if ( ! class_exists('ezpz_cookies')) {
          * Creates the settings form for ezpz_cookiebar_create_admin_page()
          */
         public function ezpz_cookiebar_settings_page_init() {
+
             register_setting(
                 'ezpz_cookiebar_options_group', // option_group
                 'ezpz_cookiebar_settings', // option_name
@@ -190,7 +204,6 @@ if ( ! class_exists('ezpz_cookies')) {
                 'cookie_bar_message',
                 $settings = array(
                   'textarea_name' => 'ezpz_cookiebar_settings[cookie_bar_message]',
-                  'editor_class' => 'simple-wysiwig', // TODO: Use this class with display: none to hide unrequired buttons
                   'media_buttons' => false,
                   'textarea_rows' => '10',
                   'teeny' => true
