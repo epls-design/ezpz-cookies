@@ -16,3 +16,48 @@
 if ( ! defined('ABSPATH')) {
 	exit;
 }
+
+if ( ! class_exists('ezpz_cookie_bar')) {
+
+    class ezpz_cookie_bar {
+
+        /**
+         * __construct() Sets up the class functionality
+         */
+        function __construct()
+        {
+            /**
+             * Init Admin Dashboard
+             */
+            add_action('admin_menu', [$this, 'cb_admin_menu']);
+        }
+
+        /**
+         * Add Admin Menu Item
+         */
+        function cb_admin_menu() {
+            add_options_page(
+                __('Cookie Settings'),
+                __('Cookie Settings'),
+                'manage_options',
+                'ezpz-cookies',
+                [$this, 'cb_admin_page'],
+                NULL);
+        }
+
+        /**
+         * Render Admin Settings Page
+         */
+        public function cb_admin_page() {
+            $settings_page = plugin_dir_path(__FILE__) . 'admin-settings.php';
+            if (file_exists($settings_page)) require $settings_page;
+            else echo '<h1>'.__('Admin Settings file does not exist').'</h1>';
+        }
+    }
+
+    /**
+     * Initialize the plugin
+     */
+    new ezpz_cookie_bar();
+
+}
