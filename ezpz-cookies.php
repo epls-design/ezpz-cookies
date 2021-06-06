@@ -29,11 +29,53 @@ if ( ! class_exists('ezpz_cookies')) {
         function __construct()
         {
             /**
+             * Init Public Scripts and CSS
+             */
+            add_action( 'init' , array( $this, 'ezpz_cookiebar_init' ) );
+
+
+            /**
              * Init Admin Dashboard
              */
             add_action( 'admin_menu' , array($this, 'ezpz_cookiebar_admin_menu'));
             add_action( 'admin_init' , array( $this, 'ezpz_cookiebar_settings_page_init' ) );
             add_action( 'admin_enqueue_scripts' , array( $this, 'ezpz_cookiebar_admin_css' ) );
+        }
+
+        /**
+         * Initialize Cookiebar on the front end
+         */
+        function ezpz_cookiebar_init() {
+          // If Cookie Bar Is Active, enqueue JS, CSS and load view...
+          if(get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) :
+            add_action( 'wp_footer' , array( $this, 'ezpz_cookiebar_display' ));
+            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_css' ));
+            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_js' ));
+          endif;
+        }
+
+        /**
+         * Display Cookie Bar
+         */
+        function ezpz_cookiebar_display()
+        {
+            require plugin_dir_path(__FILE__) . 'cookiebar-view.php';
+        }
+
+        /**
+         * Enqueue CSS on Front End
+         */
+        function ezpz_cookiebar_enqueue_css()
+        {
+        	wp_enqueue_style('cookie-bar', plugins_url('cookie-bar.css', __FILE__), '', "1.0.0");
+        }
+
+        /**
+         * Enqueue JS on Front End
+         */
+        function ezpz_cookiebar_enqueue_js()
+        {
+        	wp_enqueue_script('cookie-bar', plugins_url('cookie-bar.js', __FILE__), '', "1.0.0", true);
         }
 
         /**
@@ -79,7 +121,7 @@ if ( ! class_exists('ezpz_cookies')) {
 			if ($hook != 'settings_page_ezpz-cookies') {
 				return;
             }
-			wp_enqueue_style('cookiebar_admin_css', plugins_url('ezpz-cookies-admin.css', __FILE__));
+			wp_enqueue_style('cookiebar_admin_css', plugins_url('cookie-bar-admin.css', __FILE__));
 		}
 
         public function ezpz_cookiebar_scripts_section_info() {
@@ -98,6 +140,7 @@ if ( ! class_exists('ezpz_cookies')) {
             register_setting(
                 'ezpz_cookiebar_options_group', // option_group
                 'ezpz_cookiebar_settings', // option_name
+                // TODO: Add in sanitizing
             );
 
             add_settings_section(
@@ -194,7 +237,7 @@ if ( ! class_exists('ezpz_cookies')) {
         public function cookiebar_message_cb() {
             $default_cookie_notice = sprintf(
                 '%s<a href="/cookies/">%s</a>%s',
-                 __( 'We use various tracking cookies to help us better understand how visitors use our website and to improve the user experience. You can switch these cookies off if you would like. Read more about how we use cookies on our '),
+                 __( 'We use marketing and analytics cookies to help us better understand how visitors use our website and to improve the user experience. You can switch these cookies off if you would like. Read more about how we use cookies on our '),
                  __( 'cookie policy'),
                  __( ' page.'),
               );
@@ -226,5 +269,4 @@ if ( ! class_exists('ezpz_cookies')) {
 /**
  * Initialize the plugin
  */
-if ( is_admin() )
-    $ezpz_cookies = new ezpz_cookies();
+new ezpz_cookies();
