@@ -1,3 +1,5 @@
+<?php if(!isset($_COOKIE['cookie_preferences'])): ?>
+
 <div class="cookiebar-overlay"></div>
 
 <div class="cookiebar">
@@ -8,13 +10,15 @@
   ?>
 
   <div class="cookiebar-toggle-wrapper">
-    <input type="checkbox" id="cookiebar-toggle-checkbox" class="cookiebar-toggle-checkbox" tabindex="" checked>
+    <input type="checkbox" id="cookiebar-toggle-checkbox" class="cookiebar-toggle-checkbox" tabindex="1" name="cookiebar-toggle-checkbox" value="accepted" checked="" aria-checked="true" aria-label="Analytics cookies accepted">
     <label for="cookiebar-toggle-checkbox" class="cookiebar-toggle-label">
       <span><span class="sr-text"><?php _e('Accept ');?></span><?php _e('Marketing and analytics cookies');?></span>
       <span class="cookiebar-toggle"></span>
     </label>
   </div>
 
-  <button tabindex="2" class="button cookiebar-submit"><?php _e('Save Settings');?></button>
+  <button tabindex="2" class="button cookiebar-submit" id="cookiebar-save-prefs"><?php _e('Save Settings');?></button>
 
 </div>
+
+<?php endif; ?>

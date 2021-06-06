@@ -12,6 +12,8 @@
  * Text Domain:  ezpz-cookies
  */
 
+ // TODO: Add the ability to tag third party scripts for dequeuing, eg. plugins.
+
 // If this file is called directly, abort.
 if ( ! defined('ABSPATH')) {
 	exit;
@@ -33,7 +35,6 @@ if ( ! class_exists('ezpz_cookies')) {
              */
             add_action( 'init' , array( $this, 'ezpz_cookiebar_init' ) );
 
-
             /**
              * Init Admin Dashboard
              */
@@ -49,9 +50,15 @@ if ( ! class_exists('ezpz_cookies')) {
           // If Cookie Bar Is Active, enqueue JS, CSS and load view...
           if(get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) :
             add_action( 'wp_footer' , array( $this, 'ezpz_cookiebar_display' ));
-            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_css' ));
+            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_css' ), 0);
             add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_js' ));
           endif;
+
+          if(isset($_COOKIE['cookie_preferences']) && $_COOKIE['cookie_preferences'] === 'accepted' && get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) {
+            add_action( 'wp_head' , array( $this, 'ezpz_cookiebar_render_header_scripts' ), 100);
+            add_action( 'wp_body_open' , array( $this, 'ezpz_cookiebar_render_body_scripts' ));
+            add_action( 'wp_footer' , array( $this, 'ezpz_cookiebar_render_footer_scripts' ), 30);
+          }
         }
 
         /**
@@ -76,6 +83,33 @@ if ( ! class_exists('ezpz_cookies')) {
         function ezpz_cookiebar_enqueue_js()
         {
         	wp_enqueue_script('cookie-bar', plugins_url('cookie-bar.js', __FILE__), '', "1.0.0", true);
+        }
+
+        /**
+         * Render Header Scripts
+         */
+        function ezpz_cookiebar_render_header_scripts()
+        {
+          $scripts = get_option( 'ezpz_cookiebar_settings' )['header_scripts'];
+          echo html_entity_decode($scripts);
+        }
+
+        /**
+         * Render Body Scripts
+         */
+        function ezpz_cookiebar_render_body_scripts()
+        {
+          $scripts = get_option( 'ezpz_cookiebar_settings' )['body_scripts'];
+          echo html_entity_decode($scripts);
+        }
+
+        /**
+         * Render Footer Scripts
+         */
+        function ezpz_cookiebar_render_footer_scripts()
+        {
+          $scripts = get_option( 'ezpz_cookiebar_settings' )['footer_scripts'];
+          echo html_entity_decode($scripts);
         }
 
         /**
@@ -125,7 +159,7 @@ if ( ! class_exists('ezpz_cookies')) {
 		}
 
         public function ezpz_cookiebar_scripts_section_info() {
-            echo 'The scripts you add here will only be enqueued if the user accepts tracking/analytics cookies.';
+            _e('The scripts you add here will only be enqueued if the user accepts tracking/analytics cookies. Your theme must support the wp_body_open() hook in order to display the Body Scripts.');
         }
 
         public function ezpz_cookiebar_opts_section_info() {
@@ -236,7 +270,7 @@ if ( ! class_exists('ezpz_cookies')) {
          */
         public function cookiebar_message_cb() {
             $default_cookie_notice = sprintf(
-                '%s<a href="/cookies/">%s</a>%s',
+                '%s<a href="/cookies/" tabindex="3">%s</a>%s',
                  __( 'We use marketing and analytics cookies to help us better understand how visitors use our website and to improve the user experience. You can switch these cookies off if you would like. Read more about how we use cookies on our '),
                  __( 'cookie policy'),
                  __( ' page.'),

@@ -10,18 +10,25 @@
 }
 
 .cookiebar-submit {
-  margin-bottom: 0px;
-  background-color: #1bb12f;
-  border-color: #1bb12f;
-  color: white;
+  font-weight: bold;
+  padding: .75em 1em;
+  margin-bottom: 0px !important;
+  border: none !important;
+  border-radius: 5px;
+  background-color: #1bb12f !important;
+  color: white !important;
+  font-size: 1rem;
+  transition: all .3s ease;
+  cursor: pointer;
 }
+
 .cookiebar-submit:hover, .cookiebar-submit:focus {
-  background-color: #149e26;
-  border-color: #149e26;
+  background-color: #149e26 !important;
 }
 
 .cookiebar-heading {
   margin-bottom: .5rem;
+  margin-top: 0;
   font-weight: bold;
   font-size: 1.2rem;
 }
@@ -79,7 +86,10 @@
 }
 
 .cookiebar-toggle-label {
-  display: flex;
+  display: flex !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
   align-items: center;
   justify-content: space-between;
   width: 100%;
