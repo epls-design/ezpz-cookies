@@ -1,5 +1,3 @@
-<?php if(!isset($_COOKIE['cookie_preferences'])): ?>
-
 <div class="cookiebar-overlay"></div>
 
 <div class="cookiebar">
@@ -20,5 +18,3 @@
   <button tabindex="2" class="button cookiebar-submit" id="cookiebar-save-prefs"><?php _e('Save Settings');?></button>
 
 </div>
-
-<?php endif; ?>

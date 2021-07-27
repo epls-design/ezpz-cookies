@@ -39,20 +39,33 @@
   // Save Cookie Prefs on Save
   $("#cookiebar-save-prefs").click(function () {
 
+    const url = new URL(location.href);
+
     // Hide UI Elements
     $(".cookiebar").hide("slow");
     $(".cookiebar-overlay").hide();
 
     // Set Cookie
     if ($('input.cookiebar-toggle-checkbox').prop('checked')) {
-      cbSetCookie('cookie_preferences', 'accepted', 30);
+      cbSetCookie(cookiePrefsName, 'accepted', 30);
+      url.searchParams.set('cookies', 'accepted');
     }
     else {
-      cbSetCookie('cookie_preferences', 'rejected', 30);
+      cbSetCookie(cookiePrefsName, 'rejected', 30);
+      url.searchParams.set('cookies', 'rejected');
     }
-    location.reload(); // TODO: Check this doesn't count as extra traffic in GA or as a direct rather than eg. social source. EventListeners will probably fix this.
 
+    location.assign(url.search); // TODO: Check this doesn't count as extra traffic in GA or as a direct rather than eg. social source. EventListeners will probably fix this.
 
+  });
+
+  $(document).ready(function () {
+    // On Document ready, check if the cookie is not yet set, and if so display the cookie bar. Helps with cache, as some cached pages will stil show the cookie
+    cookiePrefs = cbGetCookie(cookiePrefsName);
+    if (!cookiePrefs) {
+      $('.cookiebar-overlay').show();
+      $('.cookiebar').show();
+    }
   });
 
 })(jQuery);

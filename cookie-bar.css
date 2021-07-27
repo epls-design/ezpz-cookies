@@ -1,3 +1,8 @@
+.cookiebar, .cookiebar-overlay {
+  /* Hide by default to help with cache */
+  display: none;
+}
+
 .cookiebar {
   bottom: 1.5rem;
   left: 1.5rem;
