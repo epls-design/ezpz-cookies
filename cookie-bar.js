@@ -57,11 +57,10 @@
 
     location.assign(url.search); // TODO: Check this doesn't count as extra traffic in GA or as a direct rather than eg. social source. EventListeners will probably fix this.
 
-
   });
 
   $(document).ready(function () {
-    // On Document ready, check if the cookie is not yet set, and if so display the cookie bar. Helps with cache, as some cached pages will stil show the cookie
+    // On Document ready, check if the cookie is not yet set, and if so display the cookie bar. Helps with cache, as some cached pages will still show the cookie bar
     cookiePrefs = cbGetCookie(cookiePrefsName);
     if (!cookiePrefs) {
       $('.cookiebar-overlay').show();

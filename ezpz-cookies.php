@@ -13,6 +13,7 @@
  */
 
  // TODO: Add the ability to tag third party scripts for dequeuing, eg. plugins.
+ // TODO: The cache busting is still not 100%. If the entry page is cached, any subsequent visits back to that page wont get picked up in GA etc
 
 // If this file is called directly, abort.
 if ( ! defined('ABSPATH')) {
