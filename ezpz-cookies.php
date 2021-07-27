@@ -4,7 +4,7 @@
  * Plugin Name:  EZPZ Cookie Bar
  * Plugin URI:   https://github.com/epls-design/ezpz-cookies/
  * Description:  Simple GDPR compliant cookie bar for Wordpress. Allows the website administrator to add analytics code to the header, footer and body via the dashboard. These tracking codes will only run on user acceptance of the cookie policy.
- * Version:      1.0.0
+ * Version:      1.2.0
  * Author:       EPLS Design
  * Author URI:   https://epls.design
  * License:      GPL-2.0+
@@ -57,8 +57,8 @@ if ( ! class_exists('ezpz_cookies')) {
           if(get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active'] && !isset($_COOKIE[$this->ezpz_cookie_prefs_name])) :
             add_action( 'wp_footer' , $this->ezpz_cookiebar_set_js_var($this->ezpz_cookie_prefs_name), 30);
             add_action( 'wp_footer' , array( $this, 'ezpz_cookiebar_display' ));
-            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_css' ), 0);
-            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_js' ), 30);
+            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_css' ));
+            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_js' ));
           endif;
 
           if(isset($_COOKIE[$this->ezpz_cookie_prefs_name]) && $_COOKIE[$this->ezpz_cookie_prefs_name] === 'accepted' && get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) {
@@ -93,7 +93,7 @@ if ( ! class_exists('ezpz_cookies')) {
          */
         function ezpz_cookiebar_enqueue_css()
         {
-        	wp_enqueue_style('cookie-bar', plugins_url('cookie-bar.css', __FILE__), '', "1.0.0");
+        	wp_enqueue_style('cookie-bar', plugins_url('cookie-bar.css', __FILE__), '', "1.2.0");
         }
 
         /**
@@ -101,7 +101,7 @@ if ( ! class_exists('ezpz_cookies')) {
          */
         function ezpz_cookiebar_enqueue_js()
         {
-        	wp_enqueue_script('cookie-bar', plugins_url('cookie-bar.js', __FILE__), '', "1.0.0", true);
+        	wp_enqueue_script('cookie-bar', plugins_url('cookie-bar.js', __FILE__), '', "1.2.0", true);
         }
 
         /**
