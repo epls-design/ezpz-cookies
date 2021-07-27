@@ -45,10 +45,10 @@
 
     // Set Cookie
     if ($('input.cookiebar-toggle-checkbox').prop('checked')) {
-      cbSetCookie('cookie_preferences', 'accepted', 30);
+      cbSetCookie(cookiePrefsName, 'accepted', 30);
     }
     else {
-      cbSetCookie('cookie_preferences', 'rejected', 30);
+      cbSetCookie(cookiePrefsName, 'rejected', 30);
     }
     location.reload(); // TODO: Check this doesn't count as extra traffic in GA or as a direct rather than eg. social source. EventListeners will probably fix this.
 

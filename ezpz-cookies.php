@@ -24,41 +24,59 @@ if ( ! class_exists('ezpz_cookies')) {
     class ezpz_cookies {
 
         private $ezpz_cookiebar_options;
+        private $ezpz_cookie_prefs_name;
 
         /**
          * __construct() Sets up the class functionality
          */
         function __construct()
         {
-            /**
-             * Init Public Scripts and CSS
-             */
-            add_action( 'init' , array( $this, 'ezpz_cookiebar_init' ) );
+          // Set up name for Cookie Bar based on Site URL
+          $this->ezpz_cookie_prefs_slug = sanitize_title(get_bloginfo('name')) ? sanitize_title(get_bloginfo('name')) : 'epls';
+          $this->ezpz_cookie_prefs_name = $this->ezpz_cookie_prefs_slug . '_cookie_prefs';
 
-            /**
-             * Init Admin Dashboard
-             */
-            add_action( 'admin_menu' , array($this, 'ezpz_cookiebar_admin_menu'));
-            add_action( 'admin_init' , array( $this, 'ezpz_cookiebar_settings_page_init' ) );
-            add_action( 'admin_enqueue_scripts' , array( $this, 'ezpz_cookiebar_admin_css' ) );
+          $this->ezpz_cookiebar_init();
+          $this->ezpz_cookiebar_admin_init();
+        }
+
+        /**
+         * Init Admin Dashboard
+         */
+        private function ezpz_cookiebar_admin_init() {
+          add_action( 'admin_menu' , array($this, 'ezpz_cookiebar_admin_menu'));
+          add_action( 'admin_init' , array( $this, 'ezpz_cookiebar_settings_page_init' ) );
+          add_action( 'admin_enqueue_scripts' , array( $this, 'ezpz_cookiebar_admin_css' ) );
         }
 
         /**
          * Initialize Cookiebar on the front end
          */
-        function ezpz_cookiebar_init() {
+        private function ezpz_cookiebar_init() {
           // If Cookie Bar Is Active, enqueue JS, CSS and load view...
-          if(get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) :
+          if(get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active'] && !isset($_COOKIE[$this->ezpz_cookie_prefs_name])) :
+            add_action('wp_footer', $this->ezpz_cookiebar_set_js_var($this->ezpz_cookie_prefs_name), 10);
             add_action( 'wp_footer' , array( $this, 'ezpz_cookiebar_display' ));
             add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_css' ), 0);
-            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_js' ));
+            add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_js' ), 30);
           endif;
 
-          if(isset($_COOKIE['cookie_preferences']) && $_COOKIE['cookie_preferences'] === 'accepted' && get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) {
+          if(isset($_COOKIE[$this->ezpz_cookie_prefs_name]) && $_COOKIE[$this->ezpz_cookie_prefs_name] === 'accepted' && get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) {
             add_action( 'wp_head' , array( $this, 'ezpz_cookiebar_render_header_scripts' ), 100);
             add_action( 'wp_body_open' , array( $this, 'ezpz_cookiebar_render_body_scripts' ));
             add_action( 'wp_footer' , array( $this, 'ezpz_cookiebar_render_footer_scripts' ), 30);
           }
+        }
+
+        /**
+         * Echo out the name of $this->ezpz_cookie_prefs_name as a var so that Javascript can use it
+         */
+        function ezpz_cookiebar_set_js_var($cookie_prefs_name) {
+          $output =
+          "<script type='text/javascript' id='cookiebar-preferences-var'>var cookiePrefsName = '".$this->ezpz_cookie_prefs_name."';</script>";
+          $func = function () use($output) {
+            print $output;
+          };
+          return $func;
         }
 
         /**
