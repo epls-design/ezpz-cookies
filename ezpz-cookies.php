@@ -24,7 +24,8 @@ if ( ! class_exists('ezpz_cookies')) {
 
     class ezpz_cookies {
 
-        private $ezpz_cookiebar_options;
+        private $ezpz_cookiebar_scripts;
+        private $ezpz_cookiebar_settings;
         private $ezpz_cookie_prefs_name;
 
         /**
@@ -36,16 +37,57 @@ if ( ! class_exists('ezpz_cookies')) {
           $this->ezpz_cookie_prefs_slug = sanitize_title(get_bloginfo('name')) ? sanitize_title(get_bloginfo('name')) : 'epls';
           $this->ezpz_cookie_prefs_name = $this->ezpz_cookie_prefs_slug . '_cookie_prefs';
 
-          $this->ezpz_cookiebar_init();
+          // Retrieve Opts
+          $this->ezpz_set_options();
+
+          // Back End
           $this->ezpz_cookiebar_admin_init();
+
+          // Front End
+          $this->ezpz_cookiebar_init();
+
         }
+
+        /**
+         * Setters and Getters
+         */
+        private function ezpz_set_options(){
+          $this->ezpz_cookiebar_scripts = get_option('ezpz_cookiebar_scripts');
+          $this->ezpz_cookiebar_settings = get_option('ezpz_cookiebar_settings');
+        }
+
+        public function ezpz_get_options($type = 'scripts'){
+
+          if($type == 'scripts') :
+            return empty($this->ezpz_cookiebar_scripts) ? array() : apply_filters( 'ezpz_scripts', $this->ezpz_cookiebar_scripts );
+
+          elseif($type == 'settings') :
+            $settings = empty($this->ezpz_cookiebar_settings) ? array() : $this->ezpz_cookiebar_settings;
+
+            // Set defaults
+            if(!isset($settings['cookie_bar_message']) || empty($settings['cookie_bar_message'])) {
+              $settings['cookie_bar_message'] = sprintf(
+                '%s<a href="/cookies/" tabindex="3">%s</a>%s',
+                 __( 'We use marketing and analytics cookies to help us better understand how visitors use our website and to improve the user experience. You can switch these cookies off if you would like. Read more about how we use cookies on our '),
+                 __( 'cookie policy'),
+                 __( ' page.'),
+              );
+            }
+
+            return apply_filters('ezpz_settings', $settings);
+
+          else:
+            return null;
+          endif;
+        }
+
 
         /**
          * Init Admin Dashboard
          */
         private function ezpz_cookiebar_admin_init() {
           add_action( 'admin_menu' , array($this, 'ezpz_cookiebar_admin_menu'));
-          add_action( 'admin_init' , array( $this, 'ezpz_cookiebar_settings_page_init' ) );
+          //add_action( 'admin_init' , array( $this, 'ezpz_cookiebar_settings_page_init' ) );
           add_action( 'admin_enqueue_scripts' , array( $this, 'ezpz_cookiebar_admin_css' ) );
         }
 
@@ -62,9 +104,8 @@ if ( ! class_exists('ezpz_cookies')) {
           endif;
 
           if(isset($_COOKIE[$this->ezpz_cookie_prefs_name]) && $_COOKIE[$this->ezpz_cookie_prefs_name] === 'accepted' && get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) {
-            add_action( 'wp_head' , array( $this, 'ezpz_cookiebar_render_header_scripts' ), 100);
-            add_action( 'wp_body_open' , array( $this, 'ezpz_cookiebar_render_body_scripts' ));
-            add_action( 'wp_footer' , array( $this, 'ezpz_cookiebar_render_footer_scripts' ), 30);
+            add_action( 'wp_head' , array( $this, 'ezpz_cookiebar_render_essential_header_scripts' ), 100);
+            add_action( 'wp_body_open' , array( $this, 'ezpz_cookiebar_render_essential_body_scripts' ));
           }
         }
 
@@ -107,59 +148,99 @@ if ( ! class_exists('ezpz_cookies')) {
         /**
          * Render Header Scripts
          */
-        function ezpz_cookiebar_render_header_scripts()
+        function ezpz_cookiebar_render_essential_header_scripts()
         {
-          $scripts = get_option( 'ezpz_cookiebar_settings' )['header_scripts'];
+          $scripts = get_option( 'ezpz_cookiebar_settings' )['essential_header_scripts'];
           echo html_entity_decode($scripts);
         }
 
         /**
          * Render Body Scripts
          */
-        function ezpz_cookiebar_render_body_scripts()
+        function ezpz_cookiebar_render_essential_body_scripts()
         {
-          $scripts = get_option( 'ezpz_cookiebar_settings' )['body_scripts'];
+          $scripts = get_option( 'ezpz_cookiebar_settings' )['essential_body_scripts'];
           echo html_entity_decode($scripts);
         }
 
         /**
-         * Render Footer Scripts
+         * Register Setting Groups
          */
-        function ezpz_cookiebar_render_footer_scripts()
-        {
-          $scripts = get_option( 'ezpz_cookiebar_settings' )['footer_scripts'];
-          echo html_entity_decode($scripts);
+        function ezpz_register_settings() {
+          register_setting(
+            'ezpz_cookiebar_scripts_group',  // option_group
+            'ezpz_cookiebar_scripts', // option_name
+          );
+          register_setting(
+            'ezpz_cookiebar_settings_group',  // option_group
+            'ezpz_cookiebar_settings', // option_name
+          );
         }
 
         /**
          * Add Admin Menu Item
          */
         function ezpz_cookiebar_admin_menu() {
-            add_options_page(
-                __('Cookie Settings'), // Page Title
-                __('Cookie Settings'), // Menu Title
-                'manage_options', // Capability
-                'ezpz-cookies', // Menu Slug
-                array($this, 'ezpz_cookiebar_create_admin_page'), // Function
-                );
+          add_options_page(
+            __('Cookie Settings'), // Page Title
+            __('Cookie Settings'), // Menu Title
+            'manage_options', // Capability
+            plugin_basename(__FILE__), // Menu Slug
+            array($this, 'ezpz_cookiebar_output_admin_page'), // Function
+          );
+          $this->ezpz_register_settings();
         }
 
         /**
          * Render Admin Settings Page
          */
-        public function ezpz_cookiebar_create_admin_page() {
-            $this->ezpz_cookiebar_options = get_option( 'ezpz_cookiebar_settings' );
-            ?>
-            <div class="wrap">
-                <h2><?php echo esc_html(get_admin_page_title()); ?></h2>
+        public function ezpz_cookiebar_output_admin_page() {
+          // check user capabilities
+          if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+          }
 
-                <form method="post" action="options.php">
-                    <?php
-                        settings_fields( 'ezpz_cookiebar_options_group' );
-                        do_settings_sections( 'ezpz-cookiebar-settings' );
-                        submit_button();
+          //Get the active tab from the $_GET param
+          $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'scripts';
+
+          $tabs = [
+            __('Scripts','ezpz-cookies')  => 'scripts',
+            __('Settings','ezpz-cookies') => 'settings'
+          ];
+
+          ?>
+            <div class="wrap">
+                <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+
+                <!-- TODO: Add if updated message here -->
+
+				        <h2 class="nav-tab-wrapper">
+                  <?php foreach($tabs as $tab_name => $tab_slug):
+                    $tab_class = 'nav-tab';
+                    if($active_tab == $tab_slug) $tab_class .= ' nav-tab-active';
+                    echo '<a href="?page='.plugin_basename(__FILE__).'&amp;tab='.$tab_slug.'" class="'.$tab_class.'">'.$tab_name.'</a>';
+                  endforeach; ?>
+				        </h2>
+                <div class="tab-content">
+                  <form method="post" action="options.php">
+                    <?php switch($active_tab) :
+                      case 'settings':
+                        $this->ezpz_cookiebar_init_opts_settings();
+                        settings_fields('ezpz_cookiebar_settings_group');
+                        do_settings_sections( plugin_basename(__FILE__) );
+                        break 1;
+                      default:
+                        $this->ezpz_cookiebar_init_opts_scripts();
+                        settings_fields('ezpz_cookiebar_scripts_group');
+                        do_settings_sections( plugin_basename(__FILE__) );
+                        break 1;
+                    endswitch;
+
+                    // Dynamic Submit Button
+                    submit_button(sprintf(esc_html__('Save %s', 'ezpz-cookies'), ucfirst($active_tab)));
                     ?>
-                </form>
+                  </form>
+                </div>
             </div>
             <?php
         }
@@ -177,143 +258,157 @@ if ( ! class_exists('ezpz_cookies')) {
 			wp_enqueue_style('cookiebar_admin_css', plugins_url('cookie-bar-admin.css', __FILE__));
 		}
 
-        public function ezpz_cookiebar_scripts_section_info() {
-            _e('The scripts you add here will only be enqueued if the user accepts tracking/analytics cookies. Your theme must support the wp_body_open() hook in order to display the Body Scripts.');
+
+
+
+
+        public function ezpz_cookiebar_essential_scripts_section_info() {
+          _e('The scripts you add here will always be executed; they are considered to be essential scripts and not opt-in/opt-out. Do not add marketing or tracking scripts here.');
         }
 
-        public function ezpz_cookiebar_opts_section_info() {
-            // Return nothing
-        }
-
-        /**
-         * Creates the settings form for ezpz_cookiebar_create_admin_page()
-         */
-        public function ezpz_cookiebar_settings_page_init() {
-
-            register_setting(
-                'ezpz_cookiebar_options_group', // option_group
-                'ezpz_cookiebar_settings', // option_name
-                // TODO: Add in sanitizing
-            );
-
-            add_settings_section(
-                'ezpz_cookiebar_scripts', // id
-                __('Scripts'), // title
-                array( $this, 'ezpz_cookiebar_scripts_section_info' ), // callback
-                'ezpz-cookiebar-settings' // page
-            );
-
-            add_settings_section(
-                'ezpz_cookiebar_opts', // id
-                __('Settings'), // title
-                array( $this, 'ezpz_cookiebar_opts_section_info' ), // callback
-                'ezpz-cookiebar-settings' // page
-            );
-
-            add_settings_field(
-                'header_scripts', // id
-                __( 'Header Scripts' ), // title
-                array( $this, 'header_scripts_cb' ), // callback
-                'ezpz-cookiebar-settings', // page
-                'ezpz_cookiebar_scripts' // section
-            );
-
-            add_settings_field(
-                'body_scripts', // id
-                __( 'Body Scripts' ), // title
-                array( $this, 'body_scripts_cb' ), // callback
-                'ezpz-cookiebar-settings', // page
-                'ezpz_cookiebar_scripts' // section
-            );
-
-            add_settings_field(
-                'footer_scripts', // id
-                __( 'Footer Scripts' ), // title
-                array( $this, 'footer_scripts_cb' ), // callback
-                'ezpz-cookiebar-settings', // page
-                'ezpz_cookiebar_scripts' // section
-            );
-
-            add_settings_field(
-                'cookie_bar_message', // id
-                __( 'Cookie Bar Message' ), // title
-                array( $this, 'cookiebar_message_cb' ), // callback
-                'ezpz-cookiebar-settings', // page
-                'ezpz_cookiebar_opts' // section
-            );
-
-            add_settings_field(
-                'cookie_bar_active', // id
-                __('Cookie Bar Active?'), // title
-                array( $this, 'cookiebar_toggle_cb' ), // callback
-                'ezpz-cookiebar-settings', // page
-                'ezpz_cookiebar_opts' // section
-            );
+        public function ezpz_cookiebar_optin_scripts_section_info() {
+          _e('The scripts you add here will only be executed if the user explicitly opts-in to tracking/analytics cookies.');
         }
 
         /**
-         * Callback to display the field for Header Scripts
+         * Initializes options for the Settings tab
          */
-        public function header_scripts_cb() {
-            printf(
-                '<textarea class="large-text code" rows="6" name="ezpz_cookiebar_settings[header_scripts]" id="header_scripts" placeholder="%s">%s</textarea>',
-                __('Enter scripts to be include inside <head>'),
-                isset( $this->ezpz_cookiebar_options['header_scripts'] ) ? esc_attr( $this->ezpz_cookiebar_options['header_scripts']) : ''
-            );
+        public function ezpz_cookiebar_init_opts_settings() {
+          add_settings_section(
+            'ezpz_cookiebar_settings', // id
+            __('Settings', 'ezpz-cookies'), // title
+            null, // callback
+            plugin_basename(__FILE__) // page
+          );
+
+          add_settings_field(
+              'cookie_bar_message', // id
+              __( 'Cookie Bar Message', 'ezpz-cookies' ), // title
+              array( $this, 'cookiebar_message_callback' ), // callback
+              plugin_basename(__FILE__), // page
+              'ezpz_cookiebar_settings' // section
+          );
+
+          add_settings_field(
+              'cookie_bar_active', // id
+              __('Cookie Bar Active?', 'ezpz-cookies'), // title
+              array( $this, 'cookiebar_toggle_callback' ), // callback
+              plugin_basename(__FILE__), // page
+              'ezpz_cookiebar_settings' // section
+          );
         }
 
         /**
-         * Callback to display the field for Body Scripts
+         * Initializes options for the Scripts tab
          */
-        public function body_scripts_cb() {
-            printf(
-                '<textarea class="large-text code" rows="6" name="ezpz_cookiebar_settings[body_scripts]" id="body_scripts" placeholder="%s">%s</textarea>',
-                __('Enter scripts for inclusion after the opening <body> tag'),
-                isset( $this->ezpz_cookiebar_options['body_scripts'] ) ? esc_attr( $this->ezpz_cookiebar_options['body_scripts']) : ''
-            );
+        public function ezpz_cookiebar_init_opts_scripts() {
+
+          add_settings_section(
+            'ezpz_cookiebar_essential_scripts', // id
+            __('Essential Scripts', 'ezpz-cookies'), // title
+            array( $this, 'ezpz_cookiebar_essential_scripts_section_info' ), // callback
+            plugin_basename(__FILE__) // page
+          );
+
+          add_settings_field(
+            'essential_header_scripts', // id
+            esc_html( 'Essential scripts executed in <head>:','ezpz-cookies' ), // title
+            array( $this, 'essential_header_scripts_callback' ), // callback
+            plugin_basename(__FILE__), // page
+            'ezpz_cookiebar_essential_scripts' // section
+          );
+
+          add_settings_field(
+              'essential_body_scripts', // id
+              esc_html( 'Essential scripts executed in <body>:','ezpz-cookies' ), // title
+              array( $this, 'essential_body_scripts_callback' ), // callback
+              plugin_basename(__FILE__), // page
+              'ezpz_cookiebar_essential_scripts' // section
+          );
+
+          add_settings_section(
+            'ezpz_cookiebar_optin_scripts', // id
+            __('Opt-In Scripts', 'ezpz-cookies'), // title
+            array( $this, 'ezpz_cookiebar_optin_scripts_section_info' ), // callback
+            plugin_basename(__FILE__) // page
+          );
+
+          add_settings_field(
+            'header_scripts', // id
+            esc_html( 'Opt-in scripts executed in <head>:','ezpz-cookies' ), // title
+            array( $this, 'optin_header_scripts_callback' ), // callback
+            plugin_basename(__FILE__), // page
+            'ezpz_cookiebar_optin_scripts' // section
+          );
+
+          add_settings_field(
+              'body_scripts', // id
+              esc_html( 'Opt-in scripts executed in <body>:','ezpz-cookies' ), // title
+              array( $this, 'optin_body_scripts_callback' ), // callback
+              plugin_basename(__FILE__), // page
+              'ezpz_cookiebar_optin_scripts' // section
+          );
+
         }
 
-        /**
-         * Callback to display the field for Footer Scripts
-         */
-        public function footer_scripts_cb() {
-            printf(
-                '<textarea class="large-text code" rows="6" name="ezpz_cookiebar_settings[footer_scripts]" id="footer_scripts" placeholder="%s">%s</textarea>',
-                __('Enter scripts for inclusion before the closing </body> tag'),
-                isset( $this->ezpz_cookiebar_options['footer_scripts'] ) ? esc_attr( $this->ezpz_cookiebar_options['footer_scripts']) : ''
-            );
-        }
+
 
         /**
-         * Callback to display the field for Cookie Bar Message
+         * Callbacks for displaying form fields
          */
-        public function cookiebar_message_cb() {
-            $default_cookie_notice = sprintf(
-                '%s<a href="/cookies/" tabindex="3">%s</a>%s',
-                 __( 'We use marketing and analytics cookies to help us better understand how visitors use our website and to improve the user experience. You can switch these cookies off if you would like. Read more about how we use cookies on our '),
-                 __( 'cookie policy'),
-                 __( ' page.'),
-              );
-              $cookie_bar_notice = isset( $this->ezpz_cookiebar_options['cookie_bar_message']) ? $this->ezpz_cookiebar_options['cookie_bar_message'] : $default_cookie_notice; // TODO: Not yet working.
-              echo wp_editor(
-                $cookie_bar_notice,
-                'cookie_bar_message',
-                $settings = array(
-                  'textarea_name' => 'ezpz_cookiebar_settings[cookie_bar_message]',
-                  'media_buttons' => false,
-                  'textarea_rows' => '10',
-                  'teeny' => true
-                ) );
+        public function essential_header_scripts_callback() {
+          $options = $this->ezpz_get_options();
+          printf(
+              '<textarea class="large-text code" rows="8" name="ezpz_cookiebar_scripts[essential][header_scripts]" placeholder="%s">%s</textarea>',
+              esc_html('<script type=&quot;text/javascript&quot;>...</script>', 'ezpz-cookies'),
+              isset( $options['essential']['header_scripts'] ) ? esc_attr( $options['essential']['header_scripts']) : ''
+          );
+        }
+        public function essential_body_scripts_callback() {
+          $options = $this->ezpz_get_options();
+          printf(
+              '<textarea class="large-text code" rows="8" name="ezpz_cookiebar_scripts[essential][body_scripts]" placeholder="%s">%s</textarea>',
+              esc_html('<script type=&quot;text/javascript&quot;>...</script>', 'ezpz-cookies'),
+              isset( $options['essential']['body_scripts'] ) ? esc_attr( $options['essential']['body_scripts']) : ''
+          );
+        }
+        public function optin_header_scripts_callback() {
+          $options = $this->ezpz_get_options();
+          printf(
+              '<textarea class="large-text code" rows="8" name="ezpz_cookiebar_scripts[optin][header_scripts]" placeholder="%s">%s</textarea>',
+              esc_html('<script type=&quot;text/javascript&quot;>...</script>', 'ezpz-cookies'),
+              isset( $options['optin']['header_scripts'] ) ? esc_attr( $options['optin']['header_scripts']) : ''
+          );
+        }
+        public function optin_body_scripts_callback() {
+          $options = $this->ezpz_get_options();
+          printf(
+              '<textarea class="large-text code" rows="8" name="ezpz_cookiebar_scripts[optin][body_scripts]" placeholder="%s">%s</textarea>',
+              esc_html('<script type=&quot;text/javascript&quot;>...</script>', 'ezpz-cookies'),
+              isset( $options['optin']['body_scripts'] ) ? esc_attr( $options['optin']['body_scripts']) : ''
+          );
         }
 
-        /**
-         * Callback to display the checkbox to enable/disable the cookie bar
-         */
-        public function cookiebar_toggle_cb() {
-            printf(
-                '<input type="checkbox" name="ezpz_cookiebar_settings[cookie_bar_active]" id="cookie_bar_active" value="cookie_bar_active" %s>',
-                ( isset( $this->ezpz_cookiebar_options['cookie_bar_active'] ) && $this->ezpz_cookiebar_options['cookie_bar_active'] === 'cookie_bar_active' ) ? 'checked' : ''
-            );
+        public function cookiebar_message_callback() {
+          $options = $this->ezpz_get_options('settings');
+          var_dump($options);
+            echo wp_editor(
+              $options['cookie_bar_message'],
+              'cookie_bar_message',
+              $settings = array(
+                'textarea_name' => 'ezpz_cookiebar_settings[cookie_bar_message]',
+                'media_buttons' => false,
+                'textarea_rows' => '10',
+                'teeny' => true
+              ) );
+        }
+
+        public function cookiebar_toggle_callback() {
+          $options = $this->ezpz_get_options('settings');
+          printf(
+              '<input type="checkbox" name="ezpz_cookiebar_settings[cookie_bar_active]" value="true" %s>',
+              ( isset( $options['cookie_bar_active'] ) && $options['cookie_bar_active'] === 'true' ) ? 'checked' : ''
+          );
         }
 
     }
@@ -323,3 +418,15 @@ if ( ! class_exists('ezpz_cookies')) {
  * Initialize the plugin
  */
 new ezpz_cookies();
+
+/**
+ * Plugin Uninstallation
+ * Clear settings
+ *
+ */
+
+register_uninstall_hook( __FILE__, 'ezpz_cookiebar_uninstall' );
+function ezpz_cookiebar_uninstall() {
+	delete_option( 'ezpz_cookiebar_scripts' );
+	delete_option( 'ezpz_cookiebar_settings' );
+}
