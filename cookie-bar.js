@@ -1,71 +1,103 @@
-(function ($) {
+/****************
+ * Cookie Bar Helpers
+ ****************/
 
-  // TODO: Take a look at setting a JS Event like https://www.cyber-duck.co.uk/
-
-  function cbSetCookie(name, value, days) {
-    var expires;
-    if (days) {
-      var date = new Date();
-      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-      expires = ";expires=" + date.toUTCString();
-    }
-    else {
-      expires = "";
-    }
-    // Sets the cookie site-wide with path=/
-    document.cookie = name + "=" + encodeURIComponent(value) + expires + ";path=/";
+function eplsSetCookie(name, value, days) {
+  var expires;
+  if (days) {
+    var date = new Date();
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    expires = ";expires=" + date.toUTCString();
   }
+  else {
+    expires = "";
+  }
+  // Sets the cookie site-wide with path=/
+  document.cookie = name + "=" + encodeURIComponent(value) + expires + ";path=/";
+}
 
-  function cbGetCookie(name) {
-    var name = name + "=";
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var ca = decodedCookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-      var c = ca[i];
-      while (c.charAt(0) == ' ') {
-        c = c.substring(1);
+function eplsGetCookie(name) {
+  var name = name + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(';');
+  for (var i = 0; i < ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return null;
+}
+
+function eplsDestroyCookie(name) {
+  document.cookie = name + '=; Max-Age=-99999999;';
+}
+
+/****************
+ * Detect Cookie and Display Banner
+ ****************/
+
+jQuery(document).ready(function ($) {
+
+  // Load essential scripts
+  eplsEnqueueEssentialScripts();
+
+  // Check for Cookie
+  ezpzCookieValue = eplsGetCookie(ezpzCookieName);
+
+  // The cookie exists
+  if (ezpzCookieValue != null && ezpzCookieValue != '') {
+    if (ezpzCookieValue == 'accepted') {
+      eplsEnqueueOptInScripts();
+    }
+  }
+  // Display cookie bar
+  else {
+    if (ezpzCookieSettings.settings.cookie_bar_active == 'true') {
+      if (ezpzCookieSettings.settings.style == 'intrusive') {
+        jQuery('body').append('<div class="cookiebar-overlay"></div>');
       }
-      if (c.indexOf(name) == 0) {
-        return c.substring(name.length, c.length);
-      }
+      jQuery('body').append('<div role="banner" class="cookiebar ' + ezpzCookieSettings.settings.style + '"><p class="cookiebar-heading">' + ezpzCookieSettings.settings.text.cookie_bar_heading + '</p><p>' + ezpzCookieSettings.settings.text.cookie_bar_message + '</p><div class="cookiebar-form"><div class="cookiebar-toggle-wrapper"><input type="checkbox" id="cookiebar-toggle-checkbox" class="cookiebar-toggle-checkbox" tabindex="1" name="cookiebar-toggle-checkbox" value="accepted" checked="" aria-checked="true" aria-label="Analytics cookies accepted"><label for="cookiebar-toggle-checkbox" class="cookiebar-toggle-label"><span><span class="sr-text">Accept</span>Marketing and analytics cookies</span><span class="cookiebar-toggle"></span></label></div><button tabindex="2" class="cookiebar-submit" id="cookiebar-save-prefs">Save Settings</button></div></div></div>');
     }
-    return null;
   }
 
-  function cbDestroyCookie(name) {
-    document.cookie = name + '=; Max-Age=-99999999;';
-  }
-
-  // Save Cookie Prefs on Save
   $("#cookiebar-save-prefs").click(function () {
-
-    const url = new URL(location.href);
-
-    // Hide UI Elements
-    $(".cookiebar").hide("slow");
-    $(".cookiebar-overlay").hide();
-
     // Set Cookie
     if ($('input.cookiebar-toggle-checkbox').prop('checked')) {
-      cbSetCookie(cookiePrefsName, 'accepted', 30);
-      url.searchParams.set('cookies', 'accepted');
+      eplsSetCookie(ezpzCookieName, 'accepted', 30);
+      eplsEnqueueOptInScripts();
     }
     else {
-      cbSetCookie(cookiePrefsName, 'rejected', 30);
-      url.searchParams.set('cookies', 'rejected');
+      eplsSetCookie(ezpzCookieName, 'rejected', 30);
     }
+    //eplsHideCookieBar();
+  })
 
-    location.assign(url.search); // TODO: Check this doesn't count as extra traffic in GA or as a direct rather than eg. social source. EventListeners will probably fix this.
+});
 
-  });
-
-  $(document).ready(function () {
-    // On Document ready, check if the cookie is not yet set, and if so display the cookie bar. Helps with cache, as some cached pages will still show the cookie bar
-    cookiePrefs = cbGetCookie(cookiePrefsName);
-    if (!cookiePrefs) {
-      $('.cookiebar-overlay').show();
-      $('.cookiebar').show();
+/**
+ * Script Executions
+ */
+function eplsEnqueueEssentialScripts() {
+  if (typeof ezpzCookieSettings.scripts.essential != 'undefined') {
+    if (typeof ezpzCookieSettings.scripts.essential.header_scripts != 'undefined') {
+      jQuery('head').append(ezpzCookieSettings.scripts.essential.header_scripts);
     }
-  });
-
-})(jQuery);
+    if (typeof ezpzCookieSettings.scripts.essential.body_scripts != 'undefined') {
+      jQuery('body').prepend(ezpzCookieSettings.scripts.essential.body_scripts);
+    }
+  }
+}
+function eplsEnqueueOptInScripts() {
+  if (typeof ezpzCookieSettings.scripts.optin != 'undefined') {
+    if (typeof ezpzCookieSettings.scripts.optin.header_scripts != 'undefined') {
+      jQuery('head').append(ezpzCookieSettings.scripts.optin.header_scripts);
+    }
+    if (typeof ezpzCookieSettings.scripts.optin.body_scripts != 'undefined') {
+      jQuery('body').prepend(ezpzCookieSettings.scripts.optin.body_scripts);
+    }
+  }
+}

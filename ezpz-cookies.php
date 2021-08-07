@@ -36,8 +36,8 @@ if (!class_exists('EzpzCookies')) {
     function __construct()
     {
       // Set up name for Cookie Bar based on Site URL
-      $this->plugin_slug = sanitize_title(get_bloginfo('name')) ? sanitize_title(get_bloginfo('name')) : 'epls';
-      $this->cookie_name = $this->plugin_slug . '_cookie_prefs';
+      $this->plugin_slug = get_bloginfo('name') && get_bloginfo('name') != ''  ? sanitize_title(get_bloginfo('name')) : 'epls';
+      $this->cookie_name = $this->camel_case($this->plugin_slug) . 'CookiePrefs';
       $this->plugin_version = "1.2.0";
 
       // Retrieve Opts
@@ -48,6 +48,23 @@ if (!class_exists('EzpzCookies')) {
 
       // Front End
       $this->frontend_init();
+    }
+
+    /**
+     * Helpers
+     */
+
+    public function camel_case($str, array $noStrip = [])
+    {
+      // non-alpha and non-numeric characters become spaces
+      $str = preg_replace('/[^a-z0-9' . implode("", $noStrip) . ']+/i', ' ', $str);
+      $str = trim($str);
+      // uppercase the first character of each word
+      $str = ucwords(strtolower($str));
+      $str = str_replace(" ", "", $str);
+      $str = lcfirst($str);
+
+      return $str;
     }
 
     /**
@@ -101,25 +118,9 @@ if (!class_exists('EzpzCookies')) {
      */
     private function frontend_init()
     {
-      // If Cookie Bar Is Active, enqueue JS, CSS and load view...
-      if (get_option('ezpz_cookiebar_settings')['cookie_bar_active'] && !isset($_COOKIE[$this->cookie_name])) : // TODO: REMOVE THIS WHEN WORKING WITH JS
-        add_action('wp_footer', array($this, 'display_cookiebar')); // TODO: Remove when replace with JS
-        add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
-      endif;
-
-      // TODO: Remove when replace with JS
-      if (isset($_COOKIE[$this->cookie_name]) && $_COOKIE[$this->cookie_name] === 'accepted' && get_option('ezpz_cookiebar_settings')['cookie_bar_active']) { // TODO: REMOVE THIS WHEN WORKING WITH JS
-        add_action('wp_head', array($this, 'render_essential_header_scripts'), 100);
-        add_action('wp_body_open', array($this, 'render_essential_body_scripts'));
-      }
-    }
-
-    /**
-     * Display Cookie Bar
-     */
-    function display_cookiebar() // TODO: Remove when replace with JS
-    {
-      require plugin_dir_path(__FILE__) . 'cookiebar-view.php'; // TODO: Defer to bottom of page so it doesnt get crawled by search
+      add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
+      add_action('wp_head', array($this, 'render_essential_header_scripts'), 100);
+      add_action('wp_body_open', array($this, 'render_essential_body_scripts'));
     }
 
     /**
@@ -136,27 +137,9 @@ if (!class_exists('EzpzCookies')) {
         'scripts' => $this->get_options(),
         'settings' => $this->get_options('settings'),
       );
-      wp_localize_script($this->plugin_slug . '-cookies', 'cookiePrefsName', $js_varname);
-      wp_localize_script($this->plugin_slug . '-cookies', $this->plugin_slug . '-cookie-settings', $js_settings);
+      wp_localize_script($this->plugin_slug . '-cookies', 'ezpzCookieName', $js_varname);
+      wp_localize_script($this->plugin_slug . '-cookies', 'ezpzCookieSettings', $js_settings);
       wp_enqueue_script($this->plugin_slug . '-cookies');
-    }
-
-    /**
-     * Render Header Scripts
-     */
-    function render_essential_header_scripts() // TODO: Remove when replace with JS
-    {
-      $scripts = get_option('ezpz_cookiebar_settings')['essential_header_scripts'];
-      echo html_entity_decode($scripts);
-    }
-
-    /**
-     * Render Body Scripts
-     */
-    function render_essential_body_scripts() // TODO: Remove when replace with JS
-    {
-      $scripts = get_option('ezpz_cookiebar_settings')['essential_body_scripts'];
-      echo html_entity_decode($scripts);
     }
 
     /**
