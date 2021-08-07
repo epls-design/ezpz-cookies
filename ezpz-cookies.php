@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Plugin Name:  EZPZ Cookie Bar
  * Plugin URI:   https://github.com/epls-design/ezpz-cookies/
@@ -66,8 +65,9 @@ if ( ! class_exists('ezpz_cookies')) {
             $settings = empty($this->ezpz_cookiebar_settings) ? array() : $this->ezpz_cookiebar_settings;
 
             // Set defaults
-            if(!isset($settings['cookie_bar_message']) || empty($settings['cookie_bar_message'])) {
-              $settings['cookie_bar_message'] = sprintf(
+            if(!isset($settings['text']['cookie_bar_heading']) || empty($settings['text']['cookie_bar_heading'])) $settings['text']['cookie_bar_heading'] = __('This website uses cookies','ezpz-cookies');
+            if(!isset($settings['text']['cookie_bar_message']) || empty($settings['text']['cookie_bar_message'])) {
+              $settings['text']['cookie_bar_message'] = sprintf(
                 '%s<a href="/cookies/" tabindex="3">%s</a>%s',
                  __( 'We use marketing and analytics cookies to help us better understand how visitors use our website and to improve the user experience. You can switch these cookies off if you would like. Read more about how we use cookies on our '),
                  __( 'cookie policy'),
@@ -284,6 +284,14 @@ if ( ! class_exists('ezpz_cookies')) {
           );
 
           add_settings_field(
+            'cookie_bar_heading', // id
+            __( 'Cookie Bar Heading', 'ezpz-cookies' ), // title
+            array( $this, 'cookiebar_heading_callback' ), // callback
+            plugin_basename(__FILE__), // page
+            'ezpz_cookiebar_settings' // section
+          );
+
+          add_settings_field(
               'cookie_bar_message', // id
               __( 'Cookie Bar Message', 'ezpz-cookies' ), // title
               array( $this, 'cookiebar_message_callback' ), // callback
@@ -398,14 +406,20 @@ if ( ! class_exists('ezpz_cookies')) {
           );
         }
 
+        public function cookiebar_heading_callback() {
+          $options = $this->ezpz_get_options('settings');
+          printf(
+              '<textarea rows="2" cols="80" name="ezpz_cookiebar_settings[text][cookie_bar_heading]">%s</textarea>',
+              $options['text']['cookie_bar_heading']
+          );
+        }
         public function cookiebar_message_callback() {
           $options = $this->ezpz_get_options('settings');
-          var_dump($options);
             echo wp_editor(
-              $options['cookie_bar_message'],
+              $options['text']['cookie_bar_message'],
               'cookie_bar_message',
               $settings = array(
-                'textarea_name' => 'ezpz_cookiebar_settings[cookie_bar_message]',
+                'textarea_name' => 'ezpz_cookiebar_settings[text][cookie_bar_message]',
                 'media_buttons' => false,
                 'textarea_rows' => '10',
                 'teeny' => true
@@ -438,9 +452,7 @@ new ezpz_cookies();
 /**
  * Plugin Uninstallation
  * Clear settings
- *
  */
-
 register_uninstall_hook( __FILE__, 'ezpz_cookiebar_uninstall' );
 function ezpz_cookiebar_uninstall() {
 	delete_option( 'ezpz_cookiebar_scripts' );
