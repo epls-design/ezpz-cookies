@@ -11,8 +11,7 @@
  * Text Domain:  ezpz-cookies
  */
 
- // TODO: Add the ability to tag third party scripts for dequeuing, eg. plugins.
- // TODO: The cache busting is still not 100%. If the entry page is cached, any subsequent visits back to that page wont get picked up in GA etc
+ // Some help from https://wordpress.org/plugins/caching-compatible-cookie-optin-and-javascript/
 
 // If this file is called directly, abort.
 if ( ! defined('ABSPATH')) {
@@ -23,10 +22,11 @@ if ( ! class_exists('ezpz_cookies')) {
 
     class ezpz_cookies {
 
-        private $ezpz_cookiebar_scripts = null;
-        private $ezpz_cookiebar_settings = null;
-        private $ezpz_cookie_prefs_name = null;
-        private $ezpz_cookie_prefs_slug = null;
+        private $cookie_scripts = null;
+        private $cookie_settings = null;
+        private $cookie_name = null;
+        private $plugin_slug = null;
+        private $plugin_version = null;
 
         /**
          * __construct() Sets up the class functionality
@@ -34,8 +34,9 @@ if ( ! class_exists('ezpz_cookies')) {
         function __construct()
         {
           // Set up name for Cookie Bar based on Site URL
-          $this->ezpz_cookie_prefs_slug = sanitize_title(get_bloginfo('name')) ? sanitize_title(get_bloginfo('name')) : 'epls';
-          $this->ezpz_cookie_prefs_name = $this->ezpz_cookie_prefs_slug . '_cookie_prefs';
+          $this->plugin_slug = sanitize_title(get_bloginfo('name')) ? sanitize_title(get_bloginfo('name')) : 'epls';
+          $this->cookie_name = $this->plugin_slug . '_cookie_prefs';
+          $this->plugin_version = "1.2.0";
 
           // Retrieve Opts
           $this->ezpz_set_options();
@@ -52,17 +53,17 @@ if ( ! class_exists('ezpz_cookies')) {
          * Setters and Getters
          */
         private function ezpz_set_options(){
-          $this->ezpz_cookiebar_scripts = get_option('ezpz_cookiebar_scripts');
-          $this->ezpz_cookiebar_settings = get_option('ezpz_cookiebar_settings');
+          $this->cookie_scripts = get_option('ezpz_cookiebar_scripts');
+          $this->cookie_settings = get_option('ezpz_cookiebar_settings');
         }
 
         public function ezpz_get_options($type = 'scripts'){
 
           if($type == 'scripts') :
-            return empty($this->ezpz_cookiebar_scripts) ? array() : apply_filters( 'ezpz_scripts', $this->ezpz_cookiebar_scripts );
+            return empty($this->cookie_scripts) ? array() : apply_filters( 'ezpz_scripts', $this->cookie_scripts );
 
           elseif($type == 'settings') :
-            $settings = empty($this->ezpz_cookiebar_settings) ? array() : $this->ezpz_cookiebar_settings;
+            $settings = empty($this->cookie_settings) ? array() : $this->cookie_settings;
 
             // Set defaults
             if(!isset($settings['text']['cookie_bar_heading']) || empty($settings['text']['cookie_bar_heading'])) $settings['text']['cookie_bar_heading'] = __('This website uses cookies','ezpz-cookies');
@@ -83,7 +84,6 @@ if ( ! class_exists('ezpz_cookies')) {
           endif;
         }
 
-
         /**
          * Init Admin Dashboard
          */
@@ -98,29 +98,16 @@ if ( ! class_exists('ezpz_cookies')) {
          */
         private function ezpz_cookiebar_init() {
           // If Cookie Bar Is Active, enqueue JS, CSS and load view...
-          if(get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active'] && !isset($_COOKIE[$this->ezpz_cookie_prefs_name])) :
-            add_action( 'wp_footer' , $this->ezpz_cookiebar_set_js_var($this->ezpz_cookie_prefs_name), 30);
+          if(get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active'] && !isset($_COOKIE[$this->cookie_name])) : // TODO: REMOVE THIS WHEN WORKING WITH JS
             add_action( 'wp_footer' , array( $this, 'ezpz_cookiebar_display' ));
             add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_css' ));
             add_action( 'wp_enqueue_scripts' , array( $this, 'ezpz_cookiebar_enqueue_js' ));
           endif;
 
-          if(isset($_COOKIE[$this->ezpz_cookie_prefs_name]) && $_COOKIE[$this->ezpz_cookie_prefs_name] === 'accepted' && get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) {
+          if(isset($_COOKIE[$this->cookie_name]) && $_COOKIE[$this->cookie_name] === 'accepted' && get_option( 'ezpz_cookiebar_settings' )['cookie_bar_active']) { // TODO: REMOVE THIS WHEN WORKING WITH JS
             add_action( 'wp_head' , array( $this, 'ezpz_cookiebar_render_essential_header_scripts' ), 100);
             add_action( 'wp_body_open' , array( $this, 'ezpz_cookiebar_render_essential_body_scripts' ));
           }
-        }
-
-        /**
-         * Echo out the name of $this->ezpz_cookie_prefs_name as a var so that Javascript can use it
-         */
-        function ezpz_cookiebar_set_js_var($cookie_prefs_name) {
-          $output =
-          "<script type='text/javascript' id='cookiebar-preferences-var'>var cookiePrefsName = '".$this->ezpz_cookie_prefs_name."';</script>";
-          $func = function () use($output) {
-            print $output;
-          };
-          return $func;
         }
 
         /**
@@ -128,7 +115,7 @@ if ( ! class_exists('ezpz_cookies')) {
          */
         function ezpz_cookiebar_display()
         {
-            require plugin_dir_path(__FILE__) . 'cookiebar-view.php';
+            require plugin_dir_path(__FILE__) . 'cookiebar-view.php'; // TODO: Defer to bottom of page so it doesnt get crawled by search
         }
 
         /**
@@ -136,7 +123,7 @@ if ( ! class_exists('ezpz_cookies')) {
          */
         function ezpz_cookiebar_enqueue_css()
         {
-        	wp_enqueue_style('cookie-bar', plugins_url('cookie-bar.css', __FILE__), '', "1.2.0");
+        	wp_enqueue_style($this->plugin_slug.'-cookies', plugins_url('cookie-bar.css', __FILE__), '', $this->plugin_version);
         }
 
         /**
@@ -144,7 +131,15 @@ if ( ! class_exists('ezpz_cookies')) {
          */
         function ezpz_cookiebar_enqueue_js()
         {
-        	wp_enqueue_script('cookie-bar', plugins_url('cookie-bar.js', __FILE__), '', "1.2.0", true);
+          wp_register_script( $this->plugin_slug.'-cookies', plugins_url('cookie-bar.js', __FILE__), array( 'jquery' ), $this->plugin_version, true );
+          $js_varname = $this->cookie_name;
+          $js_settings = array(
+            'scripts' => $this->ezpz_get_options(),
+            'settings' => $this->ezpz_get_options('settings'),
+          );
+          wp_localize_script( $this->plugin_slug.'-cookies', 'cookiePrefsName', $js_varname );
+          wp_localize_script( $this->plugin_slug.'-cookies', $this->plugin_slug.'-cookie-settings', $js_settings );
+          wp_enqueue_script( $this->plugin_slug.'-cookies' );
         }
 
         /**
@@ -299,6 +294,13 @@ if ( ! class_exists('ezpz_cookies')) {
               'ezpz_cookiebar_settings' // section
           );
 
+          add_settings_field(
+            'cookie_bar_delete_cookies', // id
+            __( 'Cookies to revoke when opting out', 'ezpz-cookies' ), // title
+            array( $this, 'cookiebar_revoke_callback' ), // callback
+            plugin_basename(__FILE__), // page
+            'ezpz_cookiebar_settings' // section
+          );
 
           add_settings_field(
             'cookie_bar_style', // id
@@ -425,7 +427,15 @@ if ( ! class_exists('ezpz_cookies')) {
                 'teeny' => true
               ) );
         }
-
+        public function cookiebar_revoke_callback() {
+          $options = $this->ezpz_get_options('settings');
+          printf(
+              '<textarea rows="2" cols="80" name="ezpz_cookiebar_settings[cookies][unset_on_revoke]" placeholder="%s">%s</textarea><p class="description">%s</p>',
+              '__utma, __ga ...',
+              $options['cookies']['unset_on_revoke'],
+              __('Sometimes it is necessary to delete/unset cookies created by other scripts, when the user opts out of tracking cookies. Use this field to define those cookies, separated by a comma.','ezpz-cookies')
+          );
+        }
         public function cookiebar_style_callback() {
           $options = $this->ezpz_get_options('settings');
           echo '<select style="width:100%; max-width:200px;" name="ezpz_cookiebar_settings[style]">';
