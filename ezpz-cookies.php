@@ -24,9 +24,10 @@ if ( ! class_exists('ezpz_cookies')) {
 
     class ezpz_cookies {
 
-        private $ezpz_cookiebar_scripts;
-        private $ezpz_cookiebar_settings;
-        private $ezpz_cookie_prefs_name;
+        private $ezpz_cookiebar_scripts = null;
+        private $ezpz_cookiebar_settings = null;
+        private $ezpz_cookie_prefs_name = null;
+        private $ezpz_cookie_prefs_slug = null;
 
         /**
          * __construct() Sets up the class functionality
@@ -73,6 +74,7 @@ if ( ! class_exists('ezpz_cookies')) {
                  __( ' page.'),
               );
             }
+            if(!isset($settings['style'])|| empty($settings['style'])) $settings['style'] = 'intrusive';
 
             return apply_filters('ezpz_settings', $settings);
 
@@ -289,6 +291,15 @@ if ( ! class_exists('ezpz_cookies')) {
               'ezpz_cookiebar_settings' // section
           );
 
+
+          add_settings_field(
+            'cookie_bar_style', // id
+            __('Cookie Bar Style', 'ezpz-cookies'), // title
+            array( $this, 'cookiebar_style_callback' ), // callback
+            plugin_basename(__FILE__), // page
+            'ezpz_cookiebar_settings' // section
+        );
+
           add_settings_field(
               'cookie_bar_active', // id
               __('Cookie Bar Active?', 'ezpz-cookies'), // title
@@ -351,8 +362,6 @@ if ( ! class_exists('ezpz_cookies')) {
 
         }
 
-
-
         /**
          * Callbacks for displaying form fields
          */
@@ -403,6 +412,13 @@ if ( ! class_exists('ezpz_cookies')) {
               ) );
         }
 
+        public function cookiebar_style_callback() {
+          $options = $this->ezpz_get_options('settings');
+          echo '<select style="width:100%; max-width:200px;" name="ezpz_cookiebar_settings[style]">';
+          echo '<option value="intrusive"'.('intrusive' == $options['style'] ? ' selected="selected"' : '').'>'.__('Intrusive', 'ezpz-cookies').'</option>';
+          echo '<option value="unintrusive"'.('unintrusive' == $options['style'] ? ' selected="selected"' : '').'>'.__('Un-intrusive', 'ezpz-cookies').'</option>';
+          echo '</select>';
+        }
         public function cookiebar_toggle_callback() {
           $options = $this->ezpz_get_options('settings');
           printf(
