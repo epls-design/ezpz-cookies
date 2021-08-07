@@ -137,6 +137,11 @@ if (!class_exists('EzpzCookies')) {
         'scripts' => $this->get_options(),
         'settings' => $this->get_options('settings'),
       );
+
+      if ($this->get_options('settings')['cookies']['policy_page'] != 0 && is_page($this->get_options('settings')['cookies']['policy_page'])) {
+        $js_settings['settings']['hide_banner'] = 'true';
+      }
+
       wp_localize_script($this->plugin_slug . '-cookies', 'ezpzCookieName', $js_varname);
       wp_localize_script($this->plugin_slug . '-cookies', 'ezpzCookieSettings', $js_settings);
       wp_enqueue_script($this->plugin_slug . '-cookies');
@@ -280,6 +285,14 @@ if (!class_exists('EzpzCookies')) {
       );
 
       add_settings_field(
+        'cookie_policy_page', // id
+        esc_html__('Cookie Policy Page', 'ezpz-cookies'), // title
+        array($this, 'callback_cookie_policy_page'), // callback
+        plugin_basename(__FILE__), // page
+        'ezpz_cookiebar_settings' // section
+      );
+
+      add_settings_field(
         'cookie_bar_delete_cookies', // id
         __('Cookies to revoke when opting out', 'ezpz-cookies'), // title
         array($this, 'callback_cookiebar_revoke'), // callback
@@ -418,6 +431,17 @@ if (!class_exists('EzpzCookies')) {
           'teeny' => true
         )
       );
+    }
+    public function callback_cookie_policy_page()
+    {
+      $options = $this->get_options('settings');
+      echo '<select style="width:100%; max-width:300px;" name="ezpz_cookiebar_settings[cookies][policy_page]" placeholder="%s">';
+      echo '<option value="0">---</option>';
+      foreach (get_pages() as $page) {
+        echo '<option value="' . $page->ID . '"' . ($page->ID == $options['cookies']['policy_page'] ? ' selected="selected"' : '') . '>' . $page->post_title . '</option>';
+      }
+      echo '</select>';
+      echo '<p class="description">' . __('Please select the page on which the cookie policy is located. You can use the shortcode [ezpz-cookiebar] on that page to allow the user to adjust their preferences. The banner will not be displayed on this page.', 'ezpz-cookies') . '</p>';
     }
     public function callback_cookiebar_revoke()
     {

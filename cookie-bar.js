@@ -46,7 +46,7 @@ jQuery(document).ready(function ($) {
   eplsEnqueueEssentialScripts();
 
   // Check for Cookie
-  ezpzCookieValue = eplsGetCookie(ezpzCookieName);
+  var ezpzCookieValue = eplsGetCookie(ezpzCookieName);
 
   // The cookie exists
   if (ezpzCookieValue != null && ezpzCookieValue != '') {
@@ -56,25 +56,53 @@ jQuery(document).ready(function ($) {
   }
   // Display cookie bar
   else {
-    if (ezpzCookieSettings.settings.cookie_bar_active == 'true') {
-      if (ezpzCookieSettings.settings.style == 'intrusive') {
-        jQuery('body').append('<div class="cookiebar-overlay"></div>');
-      }
-      jQuery('body').append('<div role="banner" class="cookiebar ' + ezpzCookieSettings.settings.style + '"><p class="cookiebar-heading">' + ezpzCookieSettings.settings.text.cookie_bar_heading + '</p><p>' + ezpzCookieSettings.settings.text.cookie_bar_message + '</p><div class="cookiebar-form"><div class="cookiebar-toggle-wrapper"><input type="checkbox" id="cookiebar-toggle-checkbox" class="cookiebar-toggle-checkbox" tabindex="1" name="cookiebar-toggle-checkbox" value="accepted" checked="" aria-checked="true" aria-label="Analytics cookies accepted"><label for="cookiebar-toggle-checkbox" class="cookiebar-toggle-label"><span><span class="sr-text">Accept</span>Marketing and analytics cookies</span><span class="cookiebar-toggle"></span></label></div><button tabindex="2" class="cookiebar-submit" id="cookiebar-save-prefs">Save Settings</button></div></div></div>');
+    if (ezpzCookieSettings.settings.cookie_bar_active == 'true' && typeof ezpzCookieSettings.settings.hide_banner == 'undefined') {
+      console.log(ezpzCookieSettings.settings.hide_banner);
+      eplsShowCookieBar();
     }
   }
 
-  $("#cookiebar-save-prefs").click(function () {
+  /**
+   * Set Cookie
+   */
+  jQuery("#cookiebar-save-prefs").click(function () {
     // Set Cookie
-    if ($('input.cookiebar-toggle-checkbox').prop('checked')) {
+    if (jQuery('input.cookiebar-toggle-checkbox').prop('checked')) {
       eplsSetCookie(ezpzCookieName, 'accepted', 30);
       eplsEnqueueOptInScripts();
     }
     else {
       eplsSetCookie(ezpzCookieName, 'rejected', 30);
     }
-    //eplsHideCookieBar();
+    eplsHideCookieBar();
   })
+
+  /**
+   * Show and Hide Cookie Bar
+   */
+  function eplsHideCookieBar() {
+    jQuery('.cookiebar-overlay').fadeOut('500');
+    jQuery('.cookiebar').fadeOut('500');
+  }
+
+  function eplsShowCookieBar() {
+
+    var marketingToggleChecked;
+
+    if (ezpzCookieValue == 'rejected') {
+      marketingToggleChecked = '';
+    }
+    else {
+      marketingToggleChecked = 'checked';
+    }
+
+    if (ezpzCookieSettings.settings.style == 'intrusive') {
+      jQuery('body').append('<div class="cookiebar-overlay"></div>');
+    }
+
+    jQuery('body').append('<div role="banner" class="cookiebar ' + ezpzCookieSettings.settings.style + '"><p class="cookiebar-heading">' + ezpzCookieSettings.settings.text.cookie_bar_heading + '</p><p>' + ezpzCookieSettings.settings.text.cookie_bar_message + '</p><form class="cookiebar-form"><div class="cookiebar-toggle-wrapper"><input type="checkbox" id="cookiebar-toggle-checkbox" class="cookiebar-toggle-checkbox" tabindex="1" name="cookiebar-toggle-checkbox" ' + marketingToggleChecked + '> <label for="cookiebar-toggle-checkbox" class="cookiebar-toggle-label"><span><span class="sr-text">Accept</span>Marketing and analytics cookies</span><span class="cookiebar-toggle"></span></label></div > <button tabindex="2" class="cookiebar-submit" id="cookiebar-save-prefs">Save Settings</button></form ></div ></div > ');
+
+  }
 
 });
 
