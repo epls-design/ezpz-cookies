@@ -3,8 +3,8 @@
 /**
  * Plugin Name:  EZPZ Cookie Bar
  * Plugin URI:   https://github.com/epls-design/ezpz-cookies/
- * Description:  Simple GDPR compliant cookie bar for Wordpress. Allows the website administrator to add analytics code to the header, footer and body via the dashboard. These tracking codes will only run on user acceptance of the cookie policy.
- * Version:      1.2.0
+ * Description:  Simple GDPR compliant cookie bar for Wordpress. Allows the website administrator to add analytics code to the header, footer and body via the dashboard. These tracking codes will only run on user acceptance of the cookie policy. Uses Javascript to load scripts, circumventing any caching on the server.
+ * Version:      2.0.0
  * Author:       EPLS Design
  * Author URI:   https://epls.design
  * License:      GPL-2.0+
@@ -38,7 +38,7 @@ if (!class_exists('EzpzCookies')) {
       // Set up name for Cookie Bar based on Site URL
       $this->plugin_slug = get_bloginfo('name') && get_bloginfo('name') != ''  ? sanitize_title(get_bloginfo('name')) : 'epls';
       $this->cookie_name = $this->camel_case($this->plugin_slug) . 'CookiePrefs';
-      $this->plugin_version = "1.2.0";
+      $this->plugin_version = "2.0.0";
 
       // Retrieve Opts
       $this->set_options();
@@ -53,7 +53,6 @@ if (!class_exists('EzpzCookies')) {
     /**
      * Helpers
      */
-
     public function camel_case($str, array $noStrip = [])
     {
       // non-alpha and non-numeric characters become spaces
@@ -67,9 +66,6 @@ if (!class_exists('EzpzCookies')) {
       return $str;
     }
 
-    /**
-     * Setters and Getters
-     */
     private function set_options()
     {
       $this->cookie_scripts = get_option('ezpz_cookiebar_scripts');
@@ -111,69 +107,6 @@ if (!class_exists('EzpzCookies')) {
     {
       add_action('admin_menu', array($this, 'create_admin_page'));
       add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
-    }
-
-    /**
-     * Initialize Cookiebar on the front end
-     */
-    private function frontend_init()
-    {
-      add_action('init', array($this, 'register_shortcodes'));
-      add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
-      add_action('wp_head', array($this, 'render_essential_header_scripts'), 100);
-      add_action('wp_body_open', array($this, 'render_essential_body_scripts'));
-    }
-
-    /**
-     * Register Shortcodes
-     */
-    function register_shortcodes()
-    {
-      add_shortcode('ezpz-cookiebar', array($this, 'ezpz_cookiebar_shortcode'));
-    }
-    function ezpz_cookiebar_shortcode()
-    {
-      $html = '<a href="javascript:void(0);" class="cookiebar-show">' . __('Adjust cookie settings', 'ezpz-cookies') . '</a>';
-      return $html;
-    }
-
-    /**
-     * Enqueue CSS and JS on Front End
-     */
-    function enqueue_scripts()
-    {
-
-      wp_enqueue_style($this->plugin_slug . '-cookies', plugins_url('cookie-bar.css', __FILE__), '', $this->plugin_version);
-
-      wp_register_script($this->plugin_slug . '-cookies', plugins_url('cookie-bar.js', __FILE__), array('jquery'), $this->plugin_version, true);
-      $js_varname = $this->cookie_name;
-      $js_settings = array(
-        'scripts' => $this->get_options(),
-        'settings' => $this->get_options('settings'),
-      );
-
-      if ($this->get_options('settings')['cookies']['policy_page'] != 0 && is_page($this->get_options('settings')['cookies']['policy_page'])) {
-        $js_settings['settings']['hide_banner'] = 'true';
-      }
-
-      wp_localize_script($this->plugin_slug . '-cookies', 'ezpzCookieName', $js_varname);
-      wp_localize_script($this->plugin_slug . '-cookies', 'ezpzCookieSettings', $js_settings);
-      wp_enqueue_script($this->plugin_slug . '-cookies');
-    }
-
-    /**
-     * Register Setting Groups
-     */
-    function register_settings()
-    {
-      register_setting(
-        'ezpz_cookiebar_scripts_group',  // option_group
-        'ezpz_cookiebar_scripts', // option_name
-      );
-      register_setting(
-        'ezpz_cookiebar_settings_group',  // option_group
-        'ezpz_cookiebar_settings', // option_name
-      );
     }
 
     /**
@@ -246,7 +179,6 @@ if (!class_exists('EzpzCookies')) {
 <?php
     }
 
-
     /**
      * Enqueue Admin CSS
      */
@@ -256,18 +188,65 @@ if (!class_exists('EzpzCookies')) {
       wp_enqueue_style('cookiebar_admin_css', plugins_url('cookie-bar-admin.css', __FILE__));
     }
 
-
-
-
-
-    public function callback_essential_section_title()
+    /**
+     * Initialize Cookiebar on the front end
+     */
+    private function frontend_init()
     {
-      _e('The scripts you add here will always be executed; they are considered to be essential scripts and not opt-in/opt-out. Do not add marketing or tracking scripts here.');
+      add_action('init', array($this, 'register_shortcodes'));
+      add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
     }
 
-    public function callback_optin_section_title()
+    /**
+     * Register Shortcodes
+     */
+    function register_shortcodes()
     {
-      _e('The scripts you add here will only be executed if the user explicitly opts-in to tracking/analytics cookies.');
+      add_shortcode('ezpz-cookiebar', array($this, 'ezpz_cookiebar_shortcode'));
+    }
+    function ezpz_cookiebar_shortcode()
+    {
+      $html = '<a href="javascript:void(0);" class="cookiebar-show">' . __('Adjust cookie settings', 'ezpz-cookies') . '</a>';
+      return $html;
+    }
+
+    /**
+     * Enqueue CSS and JS on Front End
+     */
+    function enqueue_scripts()
+    {
+
+      wp_enqueue_style($this->plugin_slug . '-cookies', plugins_url('cookie-bar.css', __FILE__), '', $this->plugin_version);
+
+      wp_register_script($this->plugin_slug . '-cookies', plugins_url('cookie-bar.js', __FILE__), array('jquery'), $this->plugin_version, true);
+      $js_varname = $this->cookie_name;
+      $js_settings = array(
+        'scripts' => $this->get_options(),
+        'settings' => $this->get_options('settings'),
+      );
+
+      if ($this->get_options('settings')['cookies']['policy_page'] != 0 && is_page($this->get_options('settings')['cookies']['policy_page'])) {
+        $js_settings['settings']['hide_banner'] = 'true';
+      }
+
+      wp_localize_script($this->plugin_slug . '-cookies', 'ezpzCookieName', $js_varname);
+      wp_localize_script($this->plugin_slug . '-cookies', 'ezpzCookieSettings', $js_settings);
+      wp_enqueue_script($this->plugin_slug . '-cookies');
+    }
+
+    /**
+     * Register Setting Groups
+     */
+    function register_settings()
+    {
+      register_setting(
+        'ezpz_cookiebar_scripts_group',  // option_group
+        'ezpz_cookiebar_scripts', // option_name
+      );
+      register_setting(
+        'ezpz_cookiebar_settings_group',  // option_group
+        'ezpz_cookiebar_settings', // option_name
+      );
     }
 
     /**
@@ -385,8 +364,17 @@ if (!class_exists('EzpzCookies')) {
     }
 
     /**
-     * Callbacks for displaying form fields
+     * Callbacks
      */
+
+    public function callback_essential_section_title()
+    {
+      _e('The scripts you add here will always be executed; they are considered to be essential scripts and not opt-in/opt-out. Do not add marketing or tracking scripts here.');
+    }
+    public function callback_optin_section_title()
+    {
+      _e('The scripts you add here will only be executed if the user explicitly opts-in to tracking/analytics cookies.');
+    }
     public function callback_essential_head_scripts()
     {
       $options = $this->get_options();
@@ -423,7 +411,6 @@ if (!class_exists('EzpzCookies')) {
         isset($options['optin']['body_scripts']) ? esc_attr($options['optin']['body_scripts']) : ''
       );
     }
-
     public function callback_cookiebar_heading()
     {
       $options = $this->get_options('settings');
