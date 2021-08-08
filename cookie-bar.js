@@ -33,7 +33,7 @@ function eplsGetCookie(name) {
 }
 
 function eplsDestroyCookie(name) {
-  document.cookie = name + '=; Max-Age=-99999999;';
+  document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 }
 
 /****************
@@ -52,6 +52,9 @@ jQuery(document).ready(function (e) {
   if (ezpzCookieValue != null && ezpzCookieValue != '') {
     if (ezpzCookieValue == 'accepted') {
       eplsEnqueueOptInScripts();
+    }
+    if (ezpzCookieValue == 'rejected') {
+      eplsRevokeThirdPartyCookies();
     }
   }
   // Display cookie bar
@@ -72,6 +75,7 @@ jQuery(document).ready(function (e) {
     }
     else {
       eplsSetCookie(ezpzCookieName, 'rejected', 30);
+      eplsRevokeThirdPartyCookies();
     }
     eplsHideCookieBar();
   })
@@ -138,5 +142,13 @@ function eplsEnqueueOptInScripts() {
     if (typeof ezpzCookieSettings.scripts.optin.body_scripts != 'undefined') {
       jQuery('body').prepend(ezpzCookieSettings.scripts.optin.body_scripts);
     }
+  }
+}
+function eplsRevokeThirdPartyCookies() {
+  if (ezpzCookieSettings.settings.cookies.unset_on_revoke != "") {
+    jQuery(ezpzCookieSettings.settings.cookies.unset_on_revoke.split(',')).each(function (index, cookie) {
+      eplsDestroyCookie(cookie);
+      console.log(cookie + ' has been destroyed');
+    });
   }
 }
