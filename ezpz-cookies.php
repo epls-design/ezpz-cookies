@@ -118,9 +118,23 @@ if (!class_exists('EzpzCookies')) {
      */
     private function frontend_init()
     {
+      add_action('init', array($this, 'register_shortcodes'));
       add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
       add_action('wp_head', array($this, 'render_essential_header_scripts'), 100);
       add_action('wp_body_open', array($this, 'render_essential_body_scripts'));
+    }
+
+    /**
+     * Register Shortcodes
+     */
+    function register_shortcodes()
+    {
+      add_shortcode('ezpz-cookiebar', array($this, 'ezpz_cookiebar_shortcode'));
+    }
+    function ezpz_cookiebar_shortcode()
+    {
+      $html = '<a href="javascript:void(0);" class="cookiebar-show">' . __('Adjust cookie settings', 'ezpz-cookies') . '</a>';
+      return $html;
     }
 
     /**

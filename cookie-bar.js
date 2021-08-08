@@ -40,7 +40,7 @@ function eplsDestroyCookie(name) {
  * Detect Cookie and Display Banner
  ****************/
 
-jQuery(document).ready(function ($) {
+jQuery(document).ready(function (e) {
 
   // Load essential scripts
   eplsEnqueueEssentialScripts();
@@ -57,7 +57,6 @@ jQuery(document).ready(function ($) {
   // Display cookie bar
   else {
     if (ezpzCookieSettings.settings.cookie_bar_active == 'true' && typeof ezpzCookieSettings.settings.hide_banner == 'undefined') {
-      console.log(ezpzCookieSettings.settings.hide_banner);
       eplsShowCookieBar();
     }
   }
@@ -65,7 +64,7 @@ jQuery(document).ready(function ($) {
   /**
    * Set Cookie
    */
-  jQuery("#cookiebar-save-prefs").click(function () {
+  jQuery(document).on('click', '.cookiebar-submit', function (e) {
     // Set Cookie
     if (jQuery('input.cookiebar-toggle-checkbox').prop('checked')) {
       eplsSetCookie(ezpzCookieName, 'accepted', 30);
@@ -96,13 +95,25 @@ jQuery(document).ready(function ($) {
       marketingToggleChecked = 'checked';
     }
 
-    if (ezpzCookieSettings.settings.style == 'intrusive') {
+    // Create Cookiebar overlay if it doesn't exist, and the style is intrusive
+    if (ezpzCookieSettings.settings.style == 'intrusive' && jQuery('.cookiebar-overlay').length == 0) {
       jQuery('body').append('<div class="cookiebar-overlay"></div>');
     }
 
-    jQuery('body').append('<div role="banner" class="cookiebar ' + ezpzCookieSettings.settings.style + '"><p class="cookiebar-heading">' + ezpzCookieSettings.settings.text.cookie_bar_heading + '</p><p>' + ezpzCookieSettings.settings.text.cookie_bar_message + '</p><form class="cookiebar-form"><div class="cookiebar-toggle-wrapper"><input type="checkbox" id="cookiebar-toggle-checkbox" class="cookiebar-toggle-checkbox" tabindex="1" name="cookiebar-toggle-checkbox" ' + marketingToggleChecked + '> <label for="cookiebar-toggle-checkbox" class="cookiebar-toggle-label"><span><span class="sr-text">Accept</span>Marketing and analytics cookies</span><span class="cookiebar-toggle"></span></label></div > <button tabindex="2" class="cookiebar-submit" id="cookiebar-save-prefs">Save Settings</button></form ></div ></div > ');
+    // Create cookiebar if it doesn't exist yet
+    if (jQuery('.cookiebar').length == 0) {
+      jQuery('body').append('<div role="banner" class="cookiebar ' + ezpzCookieSettings.settings.style + '"><p class="cookiebar-heading">' + ezpzCookieSettings.settings.text.cookie_bar_heading + '</p><p>' + ezpzCookieSettings.settings.text.cookie_bar_message + '</p><div class="cookiebar-form"><div class="cookiebar-toggle-wrapper"><input type="checkbox" id="cookiebar-toggle-checkbox" class="cookiebar-toggle-checkbox" tabindex="1" name="cookiebar-toggle-checkbox" ' + marketingToggleChecked + '> <label for="cookiebar-toggle-checkbox" class="cookiebar-toggle-label"><span><span class="sr-text">Accept</span>Marketing and analytics cookies</span><span class="cookiebar-toggle"></span></label></div><button tabindex="2" class="cookiebar-submit">Save Settings</button></div></div></div>');
+    }
+    // If it does exist, just show it.
+    else {
+      jQuery('.cookiebar').fadeIn();
+    }
 
   }
+
+  jQuery(".cookiebar-show").click(function () {
+    eplsShowCookieBar();
+  })
 
 });
 
