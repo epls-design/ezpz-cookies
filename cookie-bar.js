@@ -70,11 +70,11 @@ jQuery(document).ready(function (e) {
   jQuery(document).on('click', '.cookiebar-submit', function (e) {
     // Set Cookie
     if (jQuery('input.cookiebar-toggle-checkbox').prop('checked')) {
-      eplsSetCookie(ezpzCookieName, 'accepted', 30);
+      eplsSetCookie(ezpzCookieName, 'accepted', 365);
       eplsEnqueueOptInScripts();
     }
     else {
-      eplsSetCookie(ezpzCookieName, 'rejected', 30);
+      eplsSetCookie(ezpzCookieName, 'rejected', 365);
       eplsRevokeThirdPartyCookies();
     }
     eplsHideCookieBar();
