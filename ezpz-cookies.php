@@ -4,7 +4,7 @@
  * Plugin Name:  EZPZ Cookie Bar
  * Plugin URI:   https://github.com/epls-design/ezpz-cookies/
  * Description:  Simple GDPR compliant cookie bar for Wordpress. Allows the website administrator to add analytics code to the header, footer and body via the dashboard. These tracking codes will only run on user acceptance of the cookie policy. Uses Javascript to load scripts, circumventing any caching on the server.
- * Version:      2.0.0
+ * Version:      2.0.1
  * Author:       EPLS Design
  * Author URI:   https://epls.design
  * License:      GPL-2.0+
@@ -38,7 +38,7 @@ if (!class_exists('EzpzCookies')) {
       // Set up name for Cookie Bar based on Site URL
       $this->plugin_slug = get_bloginfo('name') && get_bloginfo('name') != ''  ? sanitize_title(get_bloginfo('name')) : 'epls';
       $this->cookie_name = $this->camel_case($this->plugin_slug) . 'CookiePrefs';
-      $this->plugin_version = "2.0.0";
+      $this->plugin_version = "2.0.1";
 
       // Retrieve Opts
       $this->set_options();
